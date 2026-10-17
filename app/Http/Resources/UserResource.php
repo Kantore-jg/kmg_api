@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Http\Resources;
+
+use App\Services\FileStorageService;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class UserResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        $storage = app(FileStorageService::class);
+
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'avatar' => $storage->url($this->avatar),
+            'is_active' => $this->is_active,
+            'email_verified_at' => $this->email_verified_at,
+            'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
+            'permissions' => $this->whenLoaded('permissions', fn () => $this->getAllPermissions()->pluck('name')),
+            'managed_market_id' => $this->managed_market_id,
+            'managed_market' => $this->whenLoaded('managedMarket', fn () => $this->managedMarket ? [
+                'id' => $this->managedMarket->id,
+                'name' => $this->managedMarket->name,
+            ] : null),
+            'active_market_id' => $this->when(
+                $this->relationLoaded('chiefPlaces'),
+                fn () => $this->chiefPlaces->first()?->market_id,
+            ),
+            'active_market' => $this->when(
+                $this->relationLoaded('chiefPlaces'),
+                function () {
+                    $market = $this->chiefPlaces->first()?->market;
+
+                    return $market ? [
+                        'id' => $market->id,
+                        'name' => $market->name,
+                    ] : null;
+                },
+            ),
+            'commerce_memberships' => $this->whenLoaded('commerceMemberships', fn () => $this->commerceMemberships->map(fn ($membership) => [
+                'commerce_id' => $membership->commerce_id,
+                'role' => $membership->role->value,
+                'commerce_name' => $membership->relationLoaded('commerce')
+                    ? $membership->commerce?->name
+                    : null,
+            ])),
+            'created_at' => $this->created_at,
+        ];
+    }
+}

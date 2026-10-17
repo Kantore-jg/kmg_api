@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Http\Controllers\API\V1;
+
+use App\Helpers\ApiResponse;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Place\AssignChiefRequest;
+use App\Http\Requests\Place\UpdatePlaceRequest;
+use App\Http\Requests\Place\StorePlaceRequest;
+use App\Http\Resources\PlaceResource;
+use App\Models\Place;
+use App\Models\User;
+use App\Services\PlaceService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class PlaceController extends Controller
+{
+    public function __construct(private PlaceService $placeService) {}
+
+    public function index(Request $request): JsonResponse
+    {
+        $places = $this->placeService->list($request->only([
+            'market_id', 'status', 'search',
+        ]), (int) $request->get('per_page', 15));
+
+        return ApiResponse::success(PlaceResource::collection($places));
+    }
+
+    public function show(Place $place): JsonResponse
+    {
+        $this->authorize('view', $place);
+
+        return ApiResponse::success(new PlaceResource(
+            $place->load(['market', 'block', 'chief', 'members.user'])
+        ));
+    }
+
+    public function store(StorePlaceRequest $request): JsonResponse
+    {
+        $place = $this->placeService->create($request->validated());
+
+        return ApiResponse::success(new PlaceResource($place), 'Place créée', 201);
+    }
+
+    public function update(UpdatePlaceRequest $request, Place $place): JsonResponse
+    {
+        $this->authorize('update', $place);
+
+        $place = $this->placeService->update($place, $request->validated());
+
+        return ApiResponse::success(new PlaceResource($place), 'Place mise à jour');
+    }
+
+    public function assignChief(AssignChiefRequest $request, Place $place): JsonResponse
+    {
+        $this->authorize('update', $place);
+
+        $user = User::findOrFail($request->validated('user_id'));
+        $place = $this->placeService->assignChief($place, $user);
+
+        return ApiResponse::success(new PlaceResource($place), 'Chef de place assigné');
+    }
+
+    public function destroy(Place $place): JsonResponse
+    {
+        $this->authorize('delete', $place);
+        $this->placeService->delete($place);
+
+        return ApiResponse::success(null, 'Emplacement supprimé');
+    }
+}
