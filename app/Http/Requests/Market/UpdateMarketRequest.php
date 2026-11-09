@@ -22,7 +22,6 @@ class UpdateMarketRequest extends FormRequest
             'city' => ['sometimes', 'string', 'max:100'],
             'location' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'total_places' => ['nullable', 'integer', 'min:0'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'image' => ['nullable', 'image', 'max:5120'],

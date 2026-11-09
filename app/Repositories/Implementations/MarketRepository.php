@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Implementations;
 
+use App\Enums\PlaceStatus;
 use App\Models\Market;
 use App\Repositories\Contracts\MarketRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -9,10 +10,22 @@ use Illuminate\Database\Eloquent\Collection;
 
 class MarketRepository implements MarketRepositoryInterface
 {
+    private function applyPlaceCounts($query)
+    {
+        return $query->withCount([
+            'places',
+            'places as occupied_places_count' => function ($q) {
+                $q->whereIn('status', [
+                    PlaceStatus::Occupied->value,
+                    PlaceStatus::Reserved->value,
+                ]);
+            },
+        ]);
+    }
+
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Market::query()
-            ->withCount('places');
+        $query = $this->applyPlaceCounts(Market::query());
 
         if (! empty($filters['province'])) {
             $query->where('province', $filters['province']);
@@ -46,18 +59,23 @@ class MarketRepository implements MarketRepositoryInterface
 
     public function findById(int $id): ?Market
     {
-        return Market::with(['blocks', 'places.chief'])->find($id);
+        return $this->applyPlaceCounts(
+            Market::query()->with(['blocks', 'places.chief'])
+        )->find($id);
     }
 
     public function findBySlug(string $slug): ?Market
     {
-        return Market::with(['blocks', 'places.chief'])->where('slug', $slug)->first();
+        return $this->applyPlaceCounts(
+            Market::query()->with(['blocks', 'places.chief'])
+        )->where('slug', $slug)->first();
     }
 
     public function getPopular(int $limit = 5): Collection
     {
-        return Market::query()
-            ->where('is_active', true)
+        return $this->applyPlaceCounts(
+            Market::query()->where('is_active', true)
+        )
             ->orderByDesc('visit_count')
             ->limit($limit)
             ->get();
@@ -65,14 +83,19 @@ class MarketRepository implements MarketRepositoryInterface
 
     public function create(array $data): Market
     {
+        unset($data['total_places'], $data['occupied_places']);
+        $data['total_places'] = 0;
+        $data['occupied_places'] = 0;
+
         return Market::create($data);
     }
 
     public function update(Market $market, array $data): Market
     {
+        unset($data['total_places'], $data['occupied_places']);
         $market->update($data);
 
-        return $market->fresh();
+        return $this->findById($market->id) ?? $market->fresh();
     }
 
     public function delete(Market $market): bool

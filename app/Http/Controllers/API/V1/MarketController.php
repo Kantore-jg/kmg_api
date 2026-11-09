@@ -38,7 +38,14 @@ class MarketController extends Controller
 
         $this->marketService->recordVisit($market, $request->user()?->id, $request->ip());
 
-        return ApiResponse::success(new MarketResource($market->load(['blocks'])));
+        $market->load(['blocks'])->loadCount([
+            'places',
+            'places as occupied_places_count' => function ($q) {
+                $q->whereIn('status', ['occupied', 'reserved']);
+            },
+        ]);
+
+        return ApiResponse::success(new MarketResource($market));
     }
 
     public function statistics(Market $market): JsonResponse

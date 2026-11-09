@@ -36,7 +36,7 @@ class DemoDataSeeder extends Seeder
                 'colline' => 'Jabe',
                 'location' => 'Quartier Jabe, Avenue du Peuple Murundi',
                 'description' => 'Le plus grand centre commercial populaire de Bujumbura.',
-                'total_places' => 120,
+                'total_places' => 0,
                 'occupied_places' => 0,
                 'image' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600',
                 'cover_image' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200',
@@ -112,7 +112,15 @@ class DemoDataSeeder extends Seeder
                 'status' => PlaceStatus::Occupied,
                 'chief_user_id' => $merchant->id,
             ]);
-            $market->update(['occupied_places' => 1]);
         }
+
+        $total = Place::where('market_id', $market->id)->count();
+        $occupied = Place::where('market_id', $market->id)
+            ->whereIn('status', [PlaceStatus::Occupied, PlaceStatus::Reserved])
+            ->count();
+        $market->update([
+            'total_places' => $total,
+            'occupied_places' => $occupied,
+        ]);
     }
 }

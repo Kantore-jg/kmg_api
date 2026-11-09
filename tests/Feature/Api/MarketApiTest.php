@@ -78,14 +78,36 @@ class MarketApiTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.name', 'Marché Mis à Jour')
             ->assertJsonPath('data.province', 'GITEGA')
-            ->assertJsonPath('data.total_places', 60);
+            ->assertJsonPath('data.total_places', 0);
 
         $this->assertDatabaseHas('markets', [
             'id' => $market->id,
             'name' => 'Marché Mis à Jour',
             'province' => 'GITEGA',
-            'total_places' => 60,
+            'total_places' => 40,
         ]);
+    }
+
+    public function test_market_total_places_reflects_actual_place_count(): void
+    {
+        Market::factory()->create([
+            'name' => 'Marché Compté',
+            'province' => 'BUJUMBURA',
+            'city' => 'BUJUMBURA',
+            'total_places' => 120,
+        ]);
+
+        $market = Market::first();
+        Place::create(['market_id' => $market->id, 'number' => 'A-01']);
+        Place::create(['market_id' => $market->id, 'number' => 'A-02']);
+        Place::create(['market_id' => $market->id, 'number' => 'A-03']);
+        Place::create(['market_id' => $market->id, 'number' => 'A-04']);
+        Place::create(['market_id' => $market->id, 'number' => 'A-05']);
+
+        $response = $this->getJson('/api/v1/markets');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.total_places', 5);
     }
 
     public function test_cannot_delete_the_only_market(): void

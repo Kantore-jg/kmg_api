@@ -33,16 +33,24 @@ class MarketService
 
     public function getStatistics(Market $market): array
     {
-        $market->loadCount('places');
+        $market->loadCount([
+            'places',
+            'places as occupied_places_count' => function ($q) {
+                $q->whereIn('status', ['occupied', 'reserved']);
+            },
+        ]);
+
+        $total = (int) ($market->places_count ?? 0);
+        $occupied = (int) ($market->occupied_places_count ?? 0);
 
         return [
-            'total_places' => $market->total_places,
-            'occupied_places' => $market->occupied_places,
-            'available_places' => max(0, $market->total_places - $market->occupied_places),
-            'occupancy_rate' => $market->total_places > 0
-                ? round(($market->occupied_places / $market->total_places) * 100, 2)
+            'total_places' => $total,
+            'occupied_places' => $occupied,
+            'available_places' => max(0, $total - $occupied),
+            'occupancy_rate' => $total > 0
+                ? round(($occupied / $total) * 100, 2)
                 : 0,
-            'places_count' => $market->places_count,
+            'places_count' => $total,
             'visit_count' => $market->visit_count,
         ];
     }
