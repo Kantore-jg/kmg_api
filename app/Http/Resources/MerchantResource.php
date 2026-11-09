@@ -28,7 +28,6 @@ class MerchantResource extends JsonResource
             'joined_date' => $this->created_at?->toDateString(),
             'verified' => (bool) $this->email_verified_at,
             'bio' => null,
-            'products_count' => $this->whenCounted('products'),
         ];
     }
 }

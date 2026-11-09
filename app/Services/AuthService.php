@@ -62,15 +62,7 @@ class AuthService
 
     public function loadUserRelations(User $user): User
     {
-        $relations = ['roles', 'permissions'];
-
-        if ($user->hasRole(UserRole::CommerceUser->value)) {
-            $user->load([
-                'commerceMemberships' => fn ($query) => $query->where('is_active', true)->with('commerce'),
-            ]);
-        }
-
-        return $user->loadMissing($relations);
+        return $user->loadMissing(['roles', 'permissions']);
     }
 
     public function updatePassword(User $user, string $currentPassword, string $newPassword): void

@@ -19,7 +19,7 @@ class PlaceRequestReviewedNotification extends Notification implements ShouldQue
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -30,18 +30,5 @@ class PlaceRequestReviewedNotification extends Notification implements ShouldQue
             ->subject('Demande de place '.$status)
             ->line("Votre demande de place a été {$status}.")
             ->line('Marché : '.$this->placeRequest->market?->name);
-    }
-
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'type' => 'place_request_reviewed',
-            'decision' => $this->decision,
-            'place_request_id' => $this->placeRequest->id,
-            'market_id' => $this->placeRequest->market_id,
-            'message' => $this->decision === 'approved'
-                ? 'Votre demande de place a été approuvée.'
-                : 'Votre demande de place a été rejetée.',
-        ];
     }
 }

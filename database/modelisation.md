@@ -1,4 +1,7 @@
-
+// NOTE (2026-11-09): product_categories, market_product_category, products/sales/commerce,
+// announcements, market_visits, activity_logs and notifications DB channel were removed.
+// Keep optional free-text `category` on places / place_requests only.
+// Prefer live migrations + models over this document for schema truth.
 
 // ============================================================
 // AUTHENTIFICATION & UTILISATEURS

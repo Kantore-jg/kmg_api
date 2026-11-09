@@ -10,8 +10,6 @@ use Illuminate\Validation\ValidationException;
 
 class MarketBlockService
 {
-    public function __construct(private ActivityLogService $activityLog) {}
-
     public function listByMarket(Market $market): Collection
     {
         return MarketBlock::query()
@@ -33,15 +31,12 @@ class MarketBlockService
             'is_active' => $data['is_active'] ?? true,
         ]);
 
-        $this->activityLog->log('market_block.created', $block);
-
         return $block->loadCount('places');
     }
 
     public function update(MarketBlock $block, array $data): MarketBlock
     {
         $block->update($data);
-        $this->activityLog->log('market_block.updated', $block);
 
         return $block->fresh()->loadCount('places');
     }
@@ -54,7 +49,6 @@ class MarketBlockService
             ]);
         }
 
-        $this->activityLog->log('market_block.deleted', $block);
         $block->delete();
     }
 

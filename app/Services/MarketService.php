@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Market;
-use App\Models\MarketVisit;
 use App\Repositories\Contracts\MarketRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -15,7 +14,6 @@ class MarketService
     public function __construct(
         private MarketRepositoryInterface $marketRepository,
         private FileStorageService $fileStorage,
-        private ActivityLogService $activityLog,
     ) {}
 
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
@@ -35,7 +33,7 @@ class MarketService
 
     public function getStatistics(Market $market): array
     {
-        $market->loadCount(['places', 'products']);
+        $market->loadCount('places');
 
         return [
             'total_places' => $market->total_places,
@@ -44,7 +42,6 @@ class MarketService
             'occupancy_rate' => $market->total_places > 0
                 ? round(($market->occupied_places / $market->total_places) * 100, 2)
                 : 0,
-            'products_count' => $market->products_count,
             'places_count' => $market->places_count,
             'visit_count' => $market->visit_count,
         ];
@@ -52,17 +49,17 @@ class MarketService
 
     public function recordVisit(Market $market, ?int $userId = null, ?string $ip = null): void
     {
-        MarketVisit::create([
-            'market_id' => $market->id,
-            'user_id' => $userId,
-            'ip_address' => $ip,
-        ]);
-
         $market->increment('visit_count');
     }
 
     public function create(array $data, ?UploadedFile $image = null, ?UploadedFile $coverImage = null): Market
     {
+        if (Market::query()->exists()) {
+            throw ValidationException::withMessages([
+                'market' => ['Un seul marché peut être configuré.'],
+            ]);
+        }
+
         $data['city'] = $data['city'] ?? ($data['province'] ?? null);
 
         if ($image) {
@@ -73,18 +70,7 @@ class MarketService
             $data['cover_image'] = $this->fileStorage->store($coverImage, 'markets/covers');
         }
 
-        $categoryIds = $data['product_category_ids'] ?? null;
-        unset($data['product_category_ids']);
-
-        $market = $this->marketRepository->create($data);
-
-        if (is_array($categoryIds)) {
-            $market->productCategories()->sync($categoryIds);
-        }
-
-        $this->activityLog->log('market.created', $market);
-
-        return $market->load('productCategories');
+        return $this->marketRepository->create($data);
     }
 
     public function update(Market $market, array $data, ?UploadedFile $image = null, ?UploadedFile $coverImage = null): Market
@@ -101,31 +87,20 @@ class MarketService
             $data['cover_image'] = $this->fileStorage->store($coverImage, 'markets/covers');
         }
 
-        $categoryIds = $data['product_category_ids'] ?? null;
-        unset($data['product_category_ids']);
-
-        $market = $this->marketRepository->update($market, $data);
-
-        if (is_array($categoryIds)) {
-            $market->productCategories()->sync($categoryIds);
-        }
-
-        $this->activityLog->log('market.updated', $market);
-
-        return $market->load('productCategories');
+        return $this->marketRepository->update($market, $data);
     }
 
     public function delete(Market $market): bool
     {
-        if ($market->places()->exists()) {
+        if (Market::query()->count() <= 1) {
             throw ValidationException::withMessages([
-                'market' => ['Ce marché contient encore des emplacements. Supprimez-les d\'abord.'],
+                'market' => ['Le marché unique ne peut pas être supprimé.'],
             ]);
         }
 
-        if ($market->products()->exists()) {
+        if ($market->places()->exists()) {
             throw ValidationException::withMessages([
-                'market' => ['Ce marché contient encore des produits. Retirez-les d\'abord.'],
+                'market' => ['Ce marché contient encore des emplacements. Supprimez-les d\'abord.'],
             ]);
         }
 
@@ -134,8 +109,6 @@ class MarketService
                 'market' => ['Ce marché est encore géré par un administrateur. Réaffectez-le d\'abord.'],
             ]);
         }
-
-        $this->activityLog->log('market.deleted', $market);
 
         return $this->marketRepository->delete($market);
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Place;
 
 use App\Enums\PlaceStatus;
-use App\Models\Market;
 use App\Models\MarketBlock;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -25,8 +24,7 @@ class StorePlaceRequest extends FormRequest
                 'required', 'string', 'max:50',
                 Rule::unique('places')->where(fn ($q) => $q->where('market_id', $this->market_id)),
             ],
-            'product_category_ids' => ['required', 'array', 'min:1'],
-            'product_category_ids.*' => ['integer', 'exists:product_categories,id'],
+            'category' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', Rule::enum(PlaceStatus::class)],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
@@ -58,34 +56,7 @@ class StorePlaceRequest extends FormRequest
                     );
                 }
             }
-
-            $categoryIds = array_values(array_unique(array_map('intval', $this->input('product_category_ids', []))));
-            if (empty($categoryIds)) {
-                return;
-            }
-
-            $market = Market::with('productCategories')->find($marketId);
-            $allowedIds = $market?->productCategories->pluck('id')->map(fn ($id) => (int) $id)->all() ?? [];
-
-            foreach ($categoryIds as $categoryId) {
-                if (! in_array($categoryId, $allowedIds, true)) {
-                    $validator->errors()->add(
-                        'product_category_ids',
-                        'Une ou plusieurs catégories ne sont pas autorisées pour ce marché.',
-                    );
-                    break;
-                }
-            }
         });
-    }
-
-    protected function prepareForValidation(): void
-    {
-        if ($this->has('product_category_ids') && is_array($this->product_category_ids)) {
-            $this->merge([
-                'product_category_ids' => array_values(array_unique(array_map('intval', $this->product_category_ids))),
-            ]);
-        }
     }
 
     public function messages(): array

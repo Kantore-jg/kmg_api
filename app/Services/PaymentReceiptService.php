@@ -17,7 +17,6 @@ class PaymentReceiptService
 {
     public function __construct(
         private FileStorageService $fileStorage,
-        private ActivityLogService $activityLog,
     ) {}
 
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
@@ -119,8 +118,6 @@ class PaymentReceiptService
             ]],
         ]);
 
-        $this->activityLog->log('receipt.submitted', $receipt);
-
         return $receipt->load(['user', 'market', 'place', 'paymentMethod']);
     }
 
@@ -137,7 +134,6 @@ class PaymentReceiptService
         ]);
 
         $receipt->user->notify(new ReceiptReviewedNotification($receipt, 'approved'));
-        $this->activityLog->log('receipt.approved', $receipt);
 
         return $receipt->fresh(['user', 'market', 'place', 'reviewer', 'paymentMethod']);
     }
@@ -156,7 +152,6 @@ class PaymentReceiptService
         ]);
 
         $receipt->user->notify(new ReceiptReviewedNotification($receipt, 'rejected'));
-        $this->activityLog->log('receipt.rejected', $receipt);
 
         return $receipt->fresh(['user', 'market', 'place', 'reviewer', 'paymentMethod']);
     }

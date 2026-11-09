@@ -15,8 +15,7 @@ class MerchantController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = User::role(UserRole::Commercant->value)
-            ->with(['chiefPlaces.market', 'managedMarket'])
-            ->withCount('products');
+            ->with(['chiefPlaces.market', 'managedMarket']);
 
         if ($request->filled('market_id')) {
             $marketId = (int) $request->market_id;

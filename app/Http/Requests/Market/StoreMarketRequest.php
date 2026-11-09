@@ -25,8 +25,6 @@ class StoreMarketRequest extends FormRequest
             'total_places' => ['nullable', 'integer', 'min:0'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'product_category_ids' => ['nullable', 'array'],
-            'product_category_ids.*' => ['integer', 'exists:product_categories,id'],
             'image' => ['nullable', 'image', 'max:5120'],
             'cover_image' => ['nullable', 'image', 'max:5120'],
             'is_active' => ['nullable', 'boolean'],

@@ -88,7 +88,7 @@ class MarketApiTest extends TestCase
         ]);
     }
 
-    public function test_super_admin_can_delete_empty_market(): void
+    public function test_cannot_delete_the_only_market(): void
     {
         $user = User::factory()->create();
         $user->assignRole('SUPER_ADMIN');
@@ -98,10 +98,30 @@ class MarketApiTest extends TestCase
 
         $response = $this->deleteJson("/api/v1/markets/{$market->id}");
 
-        $response->assertOk()
-            ->assertJsonPath('success', true);
+        $response->assertStatus(422)
+            ->assertJsonPath('success', false);
 
-        $this->assertSoftDeleted('markets', ['id' => $market->id]);
+        $this->assertDatabaseHas('markets', ['id' => $market->id, 'deleted_at' => null]);
+    }
+
+    public function test_cannot_create_a_second_market(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('SUPER_ADMIN');
+        Market::factory()->create();
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/markets', [
+            'name' => 'Second marché',
+            'province' => 'GITEGA',
+            'commune' => 'Gitega',
+            'zone' => 'Nyamugari',
+            'colline' => 'Centre-ville',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('success', false);
     }
 
     public function test_cannot_delete_market_with_places(): void

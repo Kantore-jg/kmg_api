@@ -38,7 +38,7 @@ class MarketController extends Controller
 
         $this->marketService->recordVisit($market, $request->user()?->id, $request->ip());
 
-        return ApiResponse::success(new MarketResource($market->load(['blocks', 'productCategories'])));
+        return ApiResponse::success(new MarketResource($market->load(['blocks'])));
     }
 
     public function statistics(Market $market): JsonResponse

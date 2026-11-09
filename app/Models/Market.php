@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -28,11 +27,6 @@ class Market extends Model
         ];
     }
 
-    public function productCategories(): BelongsToMany
-    {
-        return $this->belongsToMany(ProductCategory::class, 'market_product_category');
-    }
-
     public function blocks(): HasMany
     {
         return $this->hasMany(MarketBlock::class);
@@ -41,21 +35,6 @@ class Market extends Model
     public function places(): HasMany
     {
         return $this->hasMany(Place::class);
-    }
-
-    public function products(): HasMany
-    {
-        return $this->hasMany(Product::class);
-    }
-
-    public function announcements(): HasMany
-    {
-        return $this->hasMany(Announcement::class);
-    }
-
-    public function visits(): HasMany
-    {
-        return $this->hasMany(MarketVisit::class);
     }
 
     public function admins(): HasMany

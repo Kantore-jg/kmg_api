@@ -12,8 +12,7 @@ class MarketRepository implements MarketRepositoryInterface
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = Market::query()
-            ->with(['productCategories'])
-            ->withCount(['places', 'products']);
+            ->withCount('places');
 
         if (! empty($filters['province'])) {
             $query->where('province', $filters['province']);
@@ -47,18 +46,17 @@ class MarketRepository implements MarketRepositoryInterface
 
     public function findById(int $id): ?Market
     {
-        return Market::with(['blocks', 'productCategories', 'places.chief'])->find($id);
+        return Market::with(['blocks', 'places.chief'])->find($id);
     }
 
     public function findBySlug(string $slug): ?Market
     {
-        return Market::with(['blocks', 'productCategories', 'places.chief'])->where('slug', $slug)->first();
+        return Market::with(['blocks', 'places.chief'])->where('slug', $slug)->first();
     }
 
     public function getPopular(int $limit = 5): Collection
     {
         return Market::query()
-            ->with(['productCategories'])
             ->where('is_active', true)
             ->orderByDesc('visit_count')
             ->limit($limit)

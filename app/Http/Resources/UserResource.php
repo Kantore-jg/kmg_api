@@ -42,13 +42,6 @@ class UserResource extends JsonResource
                     ] : null;
                 },
             ),
-            'commerce_memberships' => $this->whenLoaded('commerceMemberships', fn () => $this->commerceMemberships->map(fn ($membership) => [
-                'commerce_id' => $membership->commerce_id,
-                'role' => $membership->role->value,
-                'commerce_name' => $membership->relationLoaded('commerce')
-                    ? $membership->commerce?->name
-                    : null,
-            ])),
             'created_at' => $this->created_at,
         ];
     }

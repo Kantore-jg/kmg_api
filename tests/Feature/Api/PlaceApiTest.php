@@ -6,7 +6,6 @@ use App\Enums\PlaceStatus;
 use App\Models\Market;
 use App\Models\MarketBlock;
 use App\Models\Place;
-use App\Models\ProductCategory;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,18 +34,12 @@ class PlaceApiTest extends TestCase
             'total_places' => 2,
             'is_active' => true,
         ]);
-        $category = ProductCategory::create([
-            'name' => 'Commerce Général',
-            'is_active' => true,
-        ]);
 
         $place = Place::create([
             'market_id' => $marketB->id,
             'market_block_id' => $block->id,
             'number' => 'B-01',
             'status' => PlaceStatus::Available->value,
-            'product_category_ids' => [$category->id],
-            'category' => $category->name,
             'qr_code' => 'TEST-PLACE-B-01',
         ]);
 
@@ -56,13 +49,11 @@ class PlaceApiTest extends TestCase
 
         $target = User::factory()->create();
         $target->assignRole('COMMERCANT');
-        $linkedPlace = Place::create([
+        Place::create([
             'market_id' => $marketB->id,
             'market_block_id' => $block->id,
             'number' => 'B-02',
             'status' => PlaceStatus::Occupied->value,
-            'product_category_ids' => [$category->id],
-            'category' => $category->name,
             'chief_user_id' => $target->id,
             'qr_code' => 'TEST-PLACE-B-02',
         ]);
@@ -85,18 +76,12 @@ class PlaceApiTest extends TestCase
             'total_places' => 2,
             'is_active' => true,
         ]);
-        $category = ProductCategory::create([
-            'name' => 'Commerce Général',
-            'is_active' => true,
-        ]);
 
         $place = Place::create([
             'market_id' => $market->id,
             'market_block_id' => $block->id,
             'number' => 'A-01',
             'status' => PlaceStatus::Available->value,
-            'product_category_ids' => [$category->id],
-            'category' => $category->name,
             'qr_code' => 'TEST-PLACE-A-01',
         ]);
 

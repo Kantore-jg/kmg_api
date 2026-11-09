@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Models\Market;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -75,6 +76,7 @@ class UserService
             }
         }
 
+        $managedMarketId = $this->resolveManagedMarketId($role, $managedMarketId);
         $this->validateRoleConstraints($role, $managedMarketId);
 
         $user = User::create([
@@ -110,6 +112,7 @@ class UserService
             $managedMarketId = (int) $actor->managed_market_id;
         }
 
+        $managedMarketId = $this->resolveManagedMarketId($role, $managedMarketId);
         $this->validateRoleConstraints($role, $managedMarketId);
 
         if ($user->id === $actor->id && isset($data['is_active']) && ! $data['is_active']) {
@@ -256,6 +259,22 @@ class UserService
         }
 
         return $user->placeRequests()->where('market_id', $marketId)->exists();
+    }
+
+    private function resolveManagedMarketId(string $role, ?int $requestedId): ?int
+    {
+        if (! in_array($role, self::MARKET_SCOPED_ROLES, true)) {
+            return $requestedId;
+        }
+
+        $marketId = Market::query()->orderBy('id')->value('id');
+        if (! $marketId) {
+            throw ValidationException::withMessages([
+                'managed_market_id' => ['Créez d\'abord le marché avant d\'assigner un gestionnaire ou un propriétaire.'],
+            ]);
+        }
+
+        return (int) $marketId;
     }
 
     private function validateRoleConstraints(string $role, ?int $managedMarketId): void
