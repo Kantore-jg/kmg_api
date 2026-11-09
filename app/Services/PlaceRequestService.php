@@ -42,6 +42,7 @@ class PlaceRequestService
     {
         $request = PlaceRequest::create([
             'market_id' => $data['market_id'],
+            'place_id' => $data['place_id'] ?? null,
             'merchant_name' => $data['merchant_name'],
             'merchant_phone' => $data['merchant_phone'],
             'description' => $data['description'] ?? null,
@@ -52,16 +53,17 @@ class PlaceRequestService
                 'action' => 'created',
                 'at' => now()->toIso8601String(),
                 'by' => $user->id,
+                'place_id' => $data['place_id'] ?? null,
             ]],
         ]);
 
-        return $request->load(['user', 'market']);
+        return $request->load(['user', 'market', 'place']);
     }
 
     public function approve(PlaceRequest $request, User $reviewer, ?int $placeId = null): PlaceRequest
     {
         return DB::transaction(function () use ($request, $reviewer, $placeId) {
-            $place = $this->resolvePlace($request, $placeId);
+            $place = $this->resolvePlace($request, $placeId ?? $request->place_id);
 
             $history = $request->history ?? [];
             $history[] = [

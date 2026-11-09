@@ -21,7 +21,7 @@ class PlaceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $places = $this->placeService->list($request->only([
-            'market_id', 'status', 'search',
+            'market_id', 'market_block_id', 'status', 'search',
         ]), (int) $request->get('per_page', 15));
 
         return ApiResponse::success(PlaceResource::collection($places));

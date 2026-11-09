@@ -24,6 +24,10 @@ class PlaceService
             $query->where('market_id', $filters['market_id']);
         }
 
+        if (! empty($filters['market_block_id'])) {
+            $query->where('market_block_id', $filters['market_block_id']);
+        }
+
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
