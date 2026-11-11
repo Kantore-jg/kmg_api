@@ -42,6 +42,10 @@ class UserResource extends JsonResource
                     ] : null;
                 },
             ),
+            'has_assigned_place' => $this->when(
+                $this->relationLoaded('chiefPlaces'),
+                fn () => $this->chiefPlaces->isNotEmpty(),
+            ),
             'created_at' => $this->created_at,
         ];
     }

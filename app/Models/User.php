@@ -65,4 +65,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Place::class, 'chief_user_id');
     }
+
+    public function hasAssignedPlace(): bool
+    {
+        return $this->relationLoaded('chiefPlaces')
+            ? $this->chiefPlaces->isNotEmpty()
+            : $this->chiefPlaces()->exists();
+    }
 }

@@ -62,7 +62,7 @@ class AuthService
 
     public function loadUserRelations(User $user): User
     {
-        return $user->loadMissing(['roles', 'permissions']);
+        return $user->loadMissing(['roles', 'permissions', 'chiefPlaces.market']);
     }
 
     public function updatePassword(User $user, string $currentPassword, string $newPassword): void

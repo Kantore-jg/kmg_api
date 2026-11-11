@@ -29,6 +29,15 @@ class StorePlaceRequestRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            if ($this->user()?->hasAssignedPlace()) {
+                $validator->errors()->add(
+                    'user',
+                    'Vous avez déjà une place assignée. Vous ne pouvez pas faire une nouvelle demande.',
+                );
+
+                return;
+            }
+
             $placeId = $this->input('place_id');
             if (! $placeId) {
                 return;

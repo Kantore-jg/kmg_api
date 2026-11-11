@@ -63,6 +63,12 @@ class PlaceRequestService
     public function approve(PlaceRequest $request, User $reviewer, ?int $placeId = null): PlaceRequest
     {
         return DB::transaction(function () use ($request, $reviewer, $placeId) {
+            if ($request->user->hasAssignedPlace()) {
+                throw ValidationException::withMessages([
+                    'user' => ['Ce demandeur a déjà une place assignée.'],
+                ]);
+            }
+
             $place = $this->resolvePlace($request, $placeId ?? $request->place_id);
 
             $history = $request->history ?? [];
